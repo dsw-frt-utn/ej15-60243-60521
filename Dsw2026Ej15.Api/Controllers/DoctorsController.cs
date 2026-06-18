@@ -2,13 +2,14 @@
 using Dsw2026Ej15.Api.Models;
 using Dsw2026Ej15.Domain.Entities;
 using Dsw2026Ej15.Domain.Interfaces;
+using Dsw2026Ej15.Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
 
 namespace Dsw2026Ej15.Api.Controllers
 {
     [ApiController]
-    [Route("[api/doctors]")]
+    [Route("api/doctors")]
     public class DoctorsController : ControllerBase
     {
         private readonly IPersistence _persistence;
@@ -19,18 +20,18 @@ namespace Dsw2026Ej15.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateDoctor([FromBody] DoctorModel.Request request)
+        public IActionResult CreateDoctor([FromBody] DoctorModel.Request request)
         {
             if(string.IsNullOrWhiteSpace(request.name) || 
                 string.IsNullOrWhiteSpace(request.LicenseNumber))
             {
-                return BadRequest("Nombre y matricula son requeridas");
+                throw new ValidationException("Nombre y matricula son requeridas");
             }
 
             var speciality = _persistence.GetSpecialityById(request.SpecialityId); 
             if (speciality == null)
             {
-                return BadRequest("La especialidad no existe");
+                throw new ValidationException("La especialidad no existe");
             }
             var newDoctor = new Doctor
             {
@@ -45,5 +46,59 @@ namespace Dsw2026Ej15.Api.Controllers
 
             return Created(); // Created=201
         }
+
+        [HttpGet]
+        public IActionResult GetAllDoctors()
+        {
+            var doctors = _persistence.GetDoctors()
+                .Where(d => d.IsActive)
+                .Select(d => new
+                {
+                    d.Id,
+                    d.Name,
+                    d.LicenseNumber,
+                    d.SpecialityId
+                });
+
+            return Ok(doctors);
+        }
+
+        [HttpGet("{id}")]
+        public IActionResult GetDoctorById(Guid id)
+        {
+            var doctor = _persistence.GetDoctorById(id);
+
+            if (doctor == null || !doctor.IsActive)
+            {
+                return NotFound();
+            }
+
+            var speciality = _persistence.GetSpecialityById(doctor.SpecialityId);
+
+            var response = new
+            {
+                doctor.Name,
+                doctor.LicenseNumber,
+                SpecialityName = speciality?.Name
+            };
+
+            return Ok(response);
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult DeleteDoctor(Guid id)
+        {
+            var doctor = _persistence.GetDoctorById(id);
+
+            if (doctor == null || !doctor.IsActive)
+            {
+                return NotFound();
+            }
+
+            _persistence.DeleteDoctor(id);
+
+            return NoContent();
+        }
     }
+
 }

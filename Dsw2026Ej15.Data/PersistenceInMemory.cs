@@ -44,18 +44,25 @@ public class PersistenceInMemory : IPersistence
         }
     }
 
-    
     public Speciality? GetSpecialityById(Guid id)
     {
         return _specialities.SingleOrDefault(e => e.Id == id);
+    }
+    public IEnumerable<Speciality> GetSpecialities()
+    {
+        return _specialities;
     }
 
     public List<Doctor> GetAllActiveDoctors()
     {
         return _doctors.Where(d => d.IsActive).ToList();
     }
+    public IEnumerable<Doctor> GetDoctors()
+    {
+        return _doctors;
+    }
 
-    public Doctor? GetActiveDoctorById(Guid id)
+    public Doctor? GetDoctorById(Guid id)
     {
         return _doctors.FirstOrDefault(d => d.Id == id && d.IsActive);
     }
@@ -65,12 +72,13 @@ public class PersistenceInMemory : IPersistence
         _doctors.Add(doctor);
     }
 
-    public void DeleteDoctor(Doctor doctor)
+    public void DeleteDoctor(Guid id)
     {
-        var doctorInDb = _doctors.FirstOrDefault(d => d.Id == doctor.Id);
+        var doctorInDb = _doctors.FirstOrDefault(d => d.Id == id);
+
         if (doctorInDb != null)
         {
-            doctorInDb.IsActive = false; // Baja lógica
+            doctorInDb.IsActive = false;
         }
     }
 }
