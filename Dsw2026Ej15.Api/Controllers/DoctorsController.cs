@@ -22,11 +22,22 @@ namespace Dsw2026Ej15.Api.Controllers
         [HttpPost]
         public IActionResult CreateDoctor([FromBody] DoctorModel.Request request)
         {
+            // luego esto pasaria a la capa de APLICACION
+            // el controlador recibiria el body, request -> le pasa a la capa de aplicacion, valida, crea al medico, persiste al medico
+            // vuelve al controlador, y este simplemente devuelve el created o codigo de estado
+
             if(string.IsNullOrWhiteSpace(request.name) || 
-                string.IsNullOrWhiteSpace(request.LicenseNumber))
+                string.IsNullOrWhiteSpace(request.LicenseNumber)) 
             {
                 throw new ValidationException("Nombre y matricula son requeridas");
             }
+
+            // a fines de responder una validacion que no se supera, es lo mismo badrequest con throw new
+            // si yo llevo todo a la capa de app y mantengo return badrequest -> NO VA A FUNCIONAR, no conoce badrequest porque es propio de controller
+            // la capa de app no le interesa los codigos de estados ni http. eso es propio de ESTA capa
+
+            // idea: reemplazar las cosas en otras capas y que sigan funcionando. app no va a entregar error.
+            //      http solo le interesa a la capa api
 
             var speciality = _persistence.GetSpecialityById(request.SpecialityId); 
             if (speciality == null)
