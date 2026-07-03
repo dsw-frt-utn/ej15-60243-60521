@@ -4,7 +4,9 @@ using Dsw2026Ej15.Domain.Entities;
 using Dsw2026Ej15.Domain.Interfaces;
 using Dsw2026Ej15.Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
-
+using System.Threading.Tasks;
+using System.Linq;
+using System;
 
 namespace Dsw2026Ej15.Api.Controllers
 {
@@ -20,96 +22,84 @@ namespace Dsw2026Ej15.Api.Controllers
         }
 
         [HttpPost]
-        public IActionResult CreateDoctor([FromBody] DoctorModel.Request request)
+        public async Task<IActionResult> CreateDoctor([FromBody] DoctorModel.Request request)
         {
-            // luego esto pasaria a la capa de APLICACION
-            // el controlador recibiria el body, request -> le pasa a la capa de aplicacion, valida, crea al medico, persiste al medico
-            // vuelve al controlador, y este simplemente devuelve el created o codigo de estado
-
-            if(string.IsNullOrWhiteSpace(request.name) || 
-                string.IsNullOrWhiteSpace(request.LicenseNumber)) 
+            if (string.IsNullOrWhiteSpace(request.name) ||
+                string.IsNullOrWhiteSpace(request.LicenseNumber))
             {
                 throw new ValidationException("Nombre y matricula son requeridas");
             }
 
-            // a fines de responder una validacion que no se supera, es lo mismo badrequest con throw new
-            // si yo llevo todo a la capa de app y mantengo return badrequest -> NO VA A FUNCIONAR, no conoce badrequest porque es propio de controller
-            // la capa de app no le interesa los codigos de estados ni http. eso es propio de ESTA capa
-
-            // idea: reemplazar las cosas en otras capas y que sigan funcionando. app no va a entregar error.
-            //      http solo le interesa a la capa api
-
-            var speciality = _persistence.GetSpecialityById(request.SpecialityId); 
+            // Agregamos el await
+            var speciality = await _persistence.GetSpecialityById(request.SpecialityId);
             if (speciality == null)
             {
                 throw new ValidationException("La especialidad no existe");
             }
-            var newDoctor = new Doctor
-            {
-                Id = Guid.NewGuid(), 
-                Name = request.name,
-                LicenseNumber = request.LicenseNumber,
-                SpecialityId = request.SpecialityId,
-                IsActive = true 
-            };
 
-            _persistence.AddDoctor(newDoctor);
+            // Adaptado al nuevo constructor de tu compañero
+            var newDoctor = new Doctor(request.name, request.LicenseNumber, speciality);
 
-            return Created(); // Created=201
+            // Agregamos el await
+            await _persistence.AddDoctor(newDoctor);
+
+            return Created();
         }
 
         [HttpGet]
-        public IActionResult GetAllDoctors()
+        public async Task<IActionResult> GetAllDoctors()
         {
-            var doctors = _persistence.GetDoctors()
-                .Where(d => d.IsActive)
-                .Select(d => new
-                {
-                    d.Id,
-                    d.Name,
-                    d.LicenseNumber,
-                    d.SpecialityId
-                });
+            // El método ahora se llama GetAllDoctors y ya filtra por IsActive internamente[cite: 1]
+            var doctors = await _persistence.GetAllDoctors();
 
-            return Ok(doctors);
+            var response = doctors.Select(d => new
+            {
+                d.Id,
+                d.Name,
+                d.LicenseNumber,
+                SpecialityId = d.Speciality?.Id // Accedemos a la especialidad anidada
+            });
+
+            return Ok(response);
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetDoctorById(Guid id)
+        public async Task<IActionResult> GetDoctorById(Guid id)
         {
-            var doctor = _persistence.GetDoctorById(id);
+            // El método ahora se llama GetDoctor[cite: 1]
+            var doctor = await _persistence.GetDoctor(id);
 
-            if (doctor == null || !doctor.IsActive)
+            // Ya no hace falta validar IsActive acá porque el método GetDoctor de tu compa ya lo filtra[cite: 1]
+            if (doctor == null)
             {
                 return NotFound();
             }
-
-            var speciality = _persistence.GetSpecialityById(doctor.SpecialityId);
 
             var response = new
             {
                 doctor.Name,
                 doctor.LicenseNumber,
-                SpecialityName = speciality?.Name
+                SpecialityName = doctor.Speciality?.Name // EF incluye la especialidad automáticamente[cite: 1]
             };
 
             return Ok(response);
         }
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteDoctor(Guid id)
+        public async Task<IActionResult> DeleteDoctor(Guid id)
         {
-            var doctor = _persistence.GetDoctorById(id);
+            var doctor = await _persistence.GetDoctor(id);
 
-            if (doctor == null || !doctor.IsActive)
+            if (doctor == null)
             {
                 return NotFound();
             }
 
-            _persistence.DeleteDoctor(id);
+            // Adaptado a la baja lógica de tu compañero[cite: 1]
+            doctor.Deactive();
+            await _persistence.UpdateDoctor(doctor);
 
             return NoContent();
         }
     }
-
 }
