@@ -2,4 +2,4 @@
 # Ejercicio N° 15
 ## Desarrollo de Software
 Adler, Lautaro - Legajo: 60243 - 3k3
-Esdpinosa, Florencia Noelia - Legajo: 60521 - 3k3
+Espinosa, Florencia Noelia - Legajo: 60521 - 3k3
