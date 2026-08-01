@@ -30,17 +30,17 @@ namespace Dsw2026Ej15.Api.Controllers
                 throw new ValidationException("Nombre y matricula son requeridas");
             }
 
-            // Agregamos el await
+         
             var speciality = await _persistence.GetSpecialityById(request.SpecialityId);
             if (speciality == null)
             {
                 throw new ValidationException("La especialidad no existe");
             }
 
-            // Adaptado al nuevo constructor de tu compañero
+            
             var newDoctor = new Doctor(request.name, request.LicenseNumber, speciality);
 
-            // Agregamos el await
+        
             await _persistence.AddDoctor(newDoctor);
 
             return Created();
@@ -49,7 +49,7 @@ namespace Dsw2026Ej15.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllDoctors()
         {
-            // El método ahora se llama GetAllDoctors y ya filtra por IsActive internamente[cite: 1]
+            
             var doctors = await _persistence.GetAllDoctors();
 
             var response = doctors.Select(d => new
@@ -57,7 +57,7 @@ namespace Dsw2026Ej15.Api.Controllers
                 d.Id,
                 d.Name,
                 d.LicenseNumber,
-                SpecialityId = d.Speciality?.Id // Accedemos a la especialidad anidada
+                SpecialityId = d.Speciality?.Id 
             });
 
             return Ok(response);
@@ -66,10 +66,10 @@ namespace Dsw2026Ej15.Api.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetDoctorById(Guid id)
         {
-            // El método ahora se llama GetDoctor[cite: 1]
+            
             var doctor = await _persistence.GetDoctor(id);
 
-            // Ya no hace falta validar IsActive acá porque el método GetDoctor de tu compa ya lo filtra[cite: 1]
+           
             if (doctor == null)
             {
                 return NotFound();
@@ -79,7 +79,7 @@ namespace Dsw2026Ej15.Api.Controllers
             {
                 doctor.Name,
                 doctor.LicenseNumber,
-                SpecialityName = doctor.Speciality?.Name // EF incluye la especialidad automáticamente[cite: 1]
+                SpecialityName = doctor.Speciality?.Name 
             };
 
             return Ok(response);
@@ -95,7 +95,7 @@ namespace Dsw2026Ej15.Api.Controllers
                 return NotFound();
             }
 
-            // Adaptado a la baja lógica de tu compañero[cite: 1]
+            
             doctor.Deactive();
             await _persistence.UpdateDoctor(doctor);
 

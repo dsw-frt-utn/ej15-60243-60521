@@ -1,6 +1,7 @@
-using Dsw2026Ej15.Domain.Interfaces;
-using Dsw2026Ej15.Data;
 using Dsw2026Ej15.Api.Middlewares;
+using Dsw2026Ej15.Data;
+using Dsw2026Ej15.Domain.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Dsw2026Ej15.Api
 {
@@ -9,21 +10,26 @@ namespace Dsw2026Ej15.Api
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-            // Add services to the container.
 
             builder.Services.AddControllers();
             builder.Services.AddHealthChecks();
             builder.Services.AddSwaggerGen();
-                     //   builder.Services.AddOpenApi();
-            builder.Services.AddSingleton<IPersistence, PersistenceInMemory>();
+
+            builder.Services.AddDbContext<Dsw2026Ej15DbContext>(options =>
+            {
+                options.UseSqlServer(connectionString);
+            });
+
+            builder.Services.AddScoped<IPersistence, PersistenceEF>();
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
+           
             if (app.Environment.IsDevelopment())
             {
-              //  app.MapOpenApi();
+              
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }

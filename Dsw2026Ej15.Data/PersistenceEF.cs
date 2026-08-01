@@ -29,7 +29,7 @@ public class PersistenceEF : IPersistence
 
     public async Task<IEnumerable<Doctor>> GetAllDoctors()
     {
-        return _context.Doctors.Include(d => d.Speciality).Where(d => d.IsActive);
+        return await _context.Doctors.Include(d => d.Speciality).Where(d => d.IsActive).ToListAsync();
     }
 
     public async Task<Doctor?> GetDoctor(Guid doctorId)

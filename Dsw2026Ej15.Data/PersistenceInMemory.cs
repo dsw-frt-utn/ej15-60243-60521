@@ -27,12 +27,12 @@ public class PersistenceInMemory : IPersistence
 
     public async Task<IEnumerable<Doctor>> GetAllDoctors()
     {
-        return _doctors;
+        return _doctors.Where(d => d.IsActive); ;
     }
 
     public async Task<Doctor?> GetDoctor(Guid doctorId)
     {
-        return _doctors.FirstOrDefault(d => d.Id == doctorId);
+        return _doctors.FirstOrDefault(d => d.Id == doctorId && d.IsActive);
     }
 
     public async Task<Speciality?> GetSpecialityById(Guid id)
